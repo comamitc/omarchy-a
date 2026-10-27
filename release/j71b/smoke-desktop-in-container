@@ -24,6 +24,9 @@ printf 'Mains\n' >/candidate/tmp/power/AC/type
 printf '1\n' >/candidate/tmp/power/AC/online
 chroot /candidate /usr/bin/setpriv --reuid=1000 --regid=1000 --clear-groups /usr/bin/env OMARCHY_POWER_SUPPLY_PATH=/tmp/power /usr/local/bin/omarchy-battery-status --shell >/evidence/battery.txt
 chroot /candidate /usr/bin/python3 -c 'import sys; sys.path.insert(0,"/usr/libexec/orchard-j71b"); from permissions import verify,verify_session_access; print("Verified privileged entries:",verify("/")); verify_session_access("/")'
+# Apply the first-login theme as the login session does, so the screenshot
+# shows the shipped wallpaper and theme rather than an unthemed desktop.
+chroot /candidate /usr/bin/setpriv --reuid=1000 --regid=1000 --clear-groups /usr/bin/env HOME=/home/tablet USER=tablet /usr/local/libexec/arch-ipad-first-theme >/evidence/first-theme.log 2>&1
 chroot /candidate /usr/bin/setpriv --reuid=1000 --regid=1000 --clear-groups /usr/bin/env HOME=/home/tablet USER=tablet XDG_RUNTIME_DIR=/run/user/1000 XDG_SESSION_TYPE=wayland WLR_BACKENDS=headless WLR_RENDERER=pixman WLR_LIBINPUT_NO_DEVICES=1 LABWC_UPDATE_ACTIVATION_ENV=0 OMARCHY_POWER_SUPPLY_PATH=/tmp/power /usr/bin/dbus-run-session /usr/bin/labwc >/evidence/labwc.log 2>&1 &
 scene=$!
 trap 'kill "$scene" 2>/dev/null || true' EXIT
