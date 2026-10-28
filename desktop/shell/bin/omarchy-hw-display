@@ -1,0 +1,22 @@
+#!/bin/bash
+# Labwc/iPad port of Omarchy's backlight picker. Prints the one panel
+# backlight the desktop drives: a known iPad panel device, else the only
+# readable backlight. Several unknown backlights are ambiguous, so fail.
+set -euo pipefail
+
+# The override is for isolated tests, never set by the desktop session.
+base=${IPADLINUX_BACKLIGHT_DIR:-/sys/class/backlight}
+# J71b panel backlight.
+known=(20e200080.backlight)
+
+for name in "${known[@]}"; do
+  [[ -d $base/$name ]] && { printf '%s\n' "$name"; exit 0; }
+done
+device=""
+for candidate in "$base"/*; do
+  [[ -d $candidate && -r $candidate/max_brightness ]] || continue
+  [[ -z $device ]] || exit 1
+  device=${candidate##*/}
+done
+[[ -n $device ]] || exit 1
+printf '%s\n' "$device"
