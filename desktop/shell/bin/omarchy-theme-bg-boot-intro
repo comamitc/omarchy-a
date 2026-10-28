@@ -1,0 +1,8 @@
+#!/bin/bash
+# Labwc/iPad stand-in for Omarchy's Hyprland boot-intro animation. Labwc
+# draws the wallpaper with swaybg and the shell keeps its cover off, so the
+# startup call and the picker's --prepare-theme have nothing to do.
+case ${1:-} in
+  ""|--prepare-theme) exit 0 ;;
+  *) echo 'Usage: omarchy-theme-bg-boot-intro [--prepare-theme theme]' >&2; exit 1 ;;
+esac

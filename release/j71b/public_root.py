@@ -36,7 +36,7 @@ def desktop_replacements():
         'shell/shell.qml', 'shell/Ui/BarIconButton.qml', 'labwc-rc.xml',
         'shell/plugins/panels/power/Panel.qml', 'shell/plugins/panels/power/Model.js',
         'shell/plugins/panels/bluetooth/Model.js', 'shell/plugins/panels/bluetooth/Panel.qml',
-        'bin/omarchy-bluetooth-device')}
+        'bin/omarchy-bluetooth-device', 'bin/omarchy-brightness-display')}
     replacements['home/tablet/.config/labwc/rc.xml'] = (PROJECT / 'desktop/shell/labwc-rc.xml').read_bytes()
     replacements['home/tablet/.config/labwc/autostart'] = (PROJECT / 'desktop/configuration/labwc-autostart').read_bytes()
     return replacements
@@ -110,9 +110,17 @@ def labwc_files(directory):
     return files
 
 
+# Shell helpers newer than the reused desktop base; stage.py links each on PATH.
+DESKTOP_BIN_ADDITIONS = ('omarchy-hw-display', 'omarchy-theme-bg-boot-intro')
+
+
 def desktop_additions():
-    name = 'home/tablet/.local/share/omarchy-ipad/shell/bluetooth-pairing/shell.qml'
-    return {name: ((PROJECT / 'desktop/shell/shell/bluetooth-pairing/shell.qml').read_bytes(), 0o644)}
+    prefix = 'home/tablet/.local/share/omarchy-ipad/'
+    additions = {prefix + 'shell/bluetooth-pairing/shell.qml': (
+        (PROJECT / 'desktop/shell/shell/bluetooth-pairing/shell.qml').read_bytes(), 0o644)}
+    for script in DESKTOP_BIN_ADDITIONS:
+        additions[prefix + 'bin/' + script] = ((PROJECT / 'desktop/shell/bin' / script).read_bytes(), 0o755)
+    return additions
 
 
 def system_files(kernel_release):
@@ -224,6 +232,13 @@ def build(base, base_receipt, modules_dir, dropbear, outdir, release, cursor_too
                 for unit in ('j71b-charge.service', 'omarchy-diagnostics.service'):
                     member = tarfile.TarInfo('etc/systemd/system/multi-user.target.wants/' + unit)
                     member.type, member.linkname, member.mode = tarfile.SYMTYPE, '/usr/lib/systemd/system/' + unit, 0o777
+                    if member.name not in seen:
+                        add_parents(member.name)
+                        add(member)
+                for script in DESKTOP_BIN_ADDITIONS:
+                    member = tarfile.TarInfo('usr/local/bin/' + script)
+                    member.type, member.mode = tarfile.SYMTYPE, 0o777
+                    member.linkname = '/home/tablet/.local/share/omarchy-ipad/bin/' + script
                     if member.name not in seen:
                         add_parents(member.name)
                         add(member)

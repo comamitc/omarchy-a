@@ -246,6 +246,11 @@ PYBOOT
                 for name, expected in replacements.items():
                     self.assertEqual(bundle.extractfile(name).read(), expected)
                     self.assertEqual(manifest[name], hashlib.sha256(expected).hexdigest())
+                for script in public_root.DESKTOP_BIN_ADDITIONS:
+                    target = '/home/tablet/.local/share/omarchy-ipad/bin/' + script
+                    self.assertEqual(bundle.getmember(target[1:]).mode, 0o755)
+                    link = bundle.getmember('usr/local/bin/' + script)
+                    self.assertEqual((link.issym(), link.linkname), (True, target))
             destination = root / 'installed'
             destination.mkdir()
             previous = os.umask(0o077)
